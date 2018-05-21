@@ -9,6 +9,7 @@ import React from 'react'
 // (if we've gotten to that part)
 class Switch extends React.Component {
   onChangeHandler = e => {
+    console.log('changing');
     e.preventDefault()
     this.props.onClick()
   }
