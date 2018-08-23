@@ -2,6 +2,7 @@
 
 import React from 'react'
 import {Switch} from '../switch'
+import { reduce } from 'rxjs/operators';
 
 const callAll = (...fns) => (...args) =>
   fns.forEach(fn => fn && fn(...args))
@@ -29,6 +30,7 @@ class Toggle extends React.Component {
     onReset: () => {},
     // 🐨 let's add a default stateReducer here. It should return
     // the changes object as it is passed.
+    stateReducer: (state, changes) => changes
   }
   initialState = {on: this.props.initialOn}
   state = this.initialState
@@ -38,6 +40,13 @@ class Toggle extends React.Component {
   // - callback: Function called after the state has been updated
   // This will call setState with an updater function (a function that receives the state).
   // If the changes are a function, then call that function with the state to get the actual changes
+  internalSetState = (changes, callback) => {
+    this.setState(state => {
+      const changesObject = typeof changes === 'function' ? changes(state) : changes;
+      const reducedChanges = this.props.stateReducer(state, changesObject) || {};
+      return Object.keys(reducedChanges).length ? reducedChanges : null;
+    }, callback)
+  }
   //
   // 🐨 Call this.props.stateReducer with the `state` and `changes` to get the user changes.
   //
@@ -49,11 +58,11 @@ class Toggle extends React.Component {
   // 🐨 Finally, update all pre-existing instances of this.setState
   // to this.internalSetState
   reset = () =>
-    this.setState(this.initialState, () =>
+    this.internalSetState(this.initialState, () =>
       this.props.onReset(this.state.on),
     )
   toggle = () =>
-    this.setState(
+    this.internalSetState(
       ({on}) => ({on: !on}),
       () => this.props.onToggle(this.state.on),
     )
